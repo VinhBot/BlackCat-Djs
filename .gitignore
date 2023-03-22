@@ -21,3 +21,8 @@ bin-release/
 /node_modules
 .replit
 replit.nix
+
+#
+.git
+.cache
+.upm
