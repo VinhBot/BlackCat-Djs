@@ -1,9 +1,4 @@
 {
-  "mongodb": {
-    "connected": "Bot được kết nối với cơ sở dữ liệu!",
-    "disconnected": "Kết nối Mongoose không thành công",
-    "error": "Lỗi kết nối Mongoose: "
-  },
   "DiscordEvents": {
     "InteractionCreate": {
       "interaction_1": "Thiếu quyền sử dụng lệnh",
@@ -13,7 +8,11 @@
       "interaction_5": "Đã xảy ra lỗi khi thực hiện lệnh, xin lỗi vì sự bất tiện <3"
     },
     "MessageCreate": {
-      "message_1": "ms"
+      "message_1": "Prefix của tôi là:",
+      "message_2": "bạn không có quyền {events_1} để sử dụng lệnh {events_2} trong {events_3}",
+      "message_3": "Lệnh này chỉ <@{events_1}> mới có thể sử dụng",
+      "message_4": "[MessageCreate]: lỗi đã được gởi đi",
+      "message_5": "sai lệnh. vui lòng \n{events_1}help để xem lại tất cả các lệnh"
     }
   },
   "HandlerEvents": {

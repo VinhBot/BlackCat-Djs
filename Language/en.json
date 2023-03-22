@@ -1,9 +1,4 @@
 {
-  "mongodb": {
-    "connected": "Bot is connected to the database!",
-    "disconnected": "Mongoose connection failed",
-    "error": "Mongoose connection error: "
-  },
   "DiscordEvents": {
     "InteractionCreate": {
       "interaction_1": "Lack of permission to use commands",
@@ -13,7 +8,11 @@
       "interaction_5": "An error occurred while executing the command, sorry for the inconvenience <3"
     },
     "MessageCreate": {
-      "message_1": "ms"
+      "message_1": "My Prefix is:",
+      "message_2": "you do not have the {events_1} permission to use the {events_2} command in {events_3}",
+      "message_3": "This command can only be used by <@{events_1}>",
+      "message 4": "[BlackCat-Club]: error has been sent",
+      "message_5": "wrong command. Please \n{events_1}help to review all commands"
     }
   },
   "HandlerEvents": {

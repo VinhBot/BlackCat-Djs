@@ -78,12 +78,11 @@ const BlackCat = class extends Discord.default.Client {
     });
     // setToken bot
     this.tokenBot = options.setToken;
+    this.developer = options.setDeveloper;
     // thiết lập evt
     this.init();
     // login bot
     this.login(this.tokenBot);
-    // kết nối tới mongodb 
-    this._mongodb(options);
     // set ngôn ngữ cho package
     lc.default.loadFromLocale(options.setLanguage);
   };
@@ -93,48 +92,26 @@ const BlackCat = class extends Discord.default.Client {
     this.slashCommands = new Discord.default.Collection(); 
   };
   /*========================================================
-  # mongourl 
-  ========================================================*/
-  _mongodb(options) { 
-    if(options.setConnectMongoDB) {
-      mongoose.default.connect(options.setMongoDB, { 
-        useNewUrlParser: true, 
-        useUnifiedTopology: true,
-        useCreateIndex: true,
-        useFindAndModify: false
-      }).then(() => {
-        console.log(`${switchLanguage("mongodb.connected")}`.blue);
-      }).catch((err) => {
-        console.error(`${switchLanguage("mongodb.error")}\n${err.stack}`.red);
-      });
-      mongoose.default.connection.on("disconnected", () => {
-        console.warn(`${switchLanguage("mongodb.disconnected")}`.red);
-      });
-      mongoose.default.set('strictQuery', false);
-    };
-  };
-  /*========================================================
   # interactionCretae
   ========================================================*/
   handlerInteractionCreate(options, client = this) {
-    const { EmbedBuilder, PermissionsBitField, InteractionType } = require("discord.js");
     if(options.setHandlerInteraction) {
       console.log("interactionCreate ready".red);
       client.on("interactionCreate", async(interaction) => {
-        if(interaction.type === InteractionType.ApplicationCommand) {
+        if(interaction.type === Discord.default.InteractionType.ApplicationCommand) {
           if(!client.slashCommands.has(interaction.commandName) || !interaction.guild) return;
           const SlashCommands = client.slashCommands.get(interaction.commandName);
           if(!SlashCommands) return console.log(!SlashCommands);
           if(SlashCommands) {
             try {
-              const embed = new EmbedBuilder().setTitle(switchLanguage("DiscordEvents.InteractionCreate.interaction_1")).setColor("Random");
+              const embed = new Discord.default.EmbedBuilder().setTitle(switchLanguage("DiscordEvents.InteractionCreate.interaction_1")).setColor("Random");
               // dev commands
-              if(SlashCommands.owner && options.setDeveloper.includes(interaction.user.id)) return interaction.reply({ 
+              if(SlashCommands.owner && this.developer.includes(interaction.user.id)) return interaction.reply({ 
                 content: switchLanguage("DiscordEvents.InteractionCreate.interaction_2")
               });
               // Các quyền của thành viên
               if(SlashCommands.userPerms) {
-                if(!interaction.member.permissions.has(PermissionsBitField.resolve(SlashCommands.userPerms || []))) return interaction.reply({               
+                if(!interaction.member.permissions.has(Discord.default.PermissionsBitField.resolve(SlashCommands.userPerms || []))) return interaction.reply({               
                   embeds: [embed.setDescription(switchLanguage("DiscordEvents.InteractionCreate.interaction_3", {
                     events_1: SlashCommands.userPerms,
                     events_2: interaction.channelId,
@@ -152,7 +129,7 @@ const BlackCat = class extends Discord.default.Client {
               SlashCommands.run(client, interaction);
             } catch(error) {
               if(interaction.replied) return await interaction.editReplyinteraction.editReply({                                                                        
-                embeds: [new EmbedBuilder().setDescription(switchLanguage("DiscordEvents.InteractionCreate.interaction_5"))], 
+                embeds: [new Discord.default.EmbedBuilder().setDescription(switchLanguage("DiscordEvents.InteractionCreate.interaction_5"))], 
                 ephemeral: true,
               }).catch(() => {});
               console.log(error);
@@ -169,9 +146,47 @@ const BlackCat = class extends Discord.default.Client {
     if(options.setHandlerMessageCreate) {
       console.log("messageCreate ready".red);
       client.on("messageCreate", (message) => {
-        if(message.content === options.setPrefix + "ping2") {
-          message.reply({ content: client.ws.ping + " " + switchLanguage("DiscordEvents.MessageCreate.message_1") });
-        };
+        if(message.author.bot || !message.guild) return;
+        const prefix = options.setPrefix;
+        const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const prefixRegex = new RegExp(`^(<@!?${client.user.id}>|${escapeRegex(prefix)})\\s*`);
+        if(!prefixRegex.test(message.content)) return;
+        const [ matchedPrefix ] = message.content.match(prefixRegex);
+        if(!message.content.startsWith(matchedPrefix)) return;   
+        const args = message.content.slice(matchedPrefix.length).trim().split(/ +/g);
+        const cmd = args.shift().toLowerCase();
+        const mention = new RegExp(`^<@!?${client.user.id}>( |)$`);
+        if(message.content.match(mention)) return message.reply({ 
+          embeds: [new Discord.default.EmbedBuilder().setDescription(HandlerEvents("DiscordEvents.MessageCreate.message_1") + ` \`${prefix}\``)]
+        }); 
+        if(cmd.length === 0) return;
+        let command = client.commands.get(cmd);
+        if(!command) command = client.commands.get(client.aliases.get(cmd));
+        if(command) {
+          try {            
+            const embed = new Discord.default.EmbedBuilder().setTitle("Thiếu quyền").setColor("Random")
+            if(command.userPerms) {
+              if(!message.member.permissions.has(Discord.default.PermissionsBitField.resolve(command.userPerms || []))) return message.reply({ 
+                embeds: [embed.setDescription(switchLanguage("DiscordEvents.MessageCreate.message_2", {
+                  events_1: command.userPerms,
+                  events_2: command.name,
+                  events_3: message.channelId
+                }))],
+              });
+            };
+            if(command.owner && message.author.id !== this.developer) return message.reply({ 
+              embeds: [embed.setDescription(switchLanguage("DiscordEvents.MessageCreate.message_3", {
+                events_1: this.developer
+              }))]
+            });
+            command.run(client, message, args, prefix);                          
+          } catch(error) {
+            console.log(error.toString());
+            message.reply({ content: switchLanguage("DiscordEvents.MessageCreate.message_4") });
+          };
+        } else return message.reply({ content: switchLanguage("DiscordEvents.MessageCreate.message_5", { events_1: prefix })}).then((msg) => {
+          setTimeout(() => msg.delete(), 10000);
+        });
       });
     };
   };
